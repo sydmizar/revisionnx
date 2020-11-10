@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # start = time.time()
     
     vdmdata = pd.read_csv('vdmdata_reduce.csv', encoding = 'utf-8-sig')
-    vdmdata.columns = ['icd_code', 'atc_code','atc_name','nrows']
+    #vdmdata.columns = ['icd_code', 'atc_code','atc_name','nrows']
     
     nodes_0 = []
     nodes_1 = []
