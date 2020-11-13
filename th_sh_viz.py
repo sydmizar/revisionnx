@@ -72,7 +72,7 @@ if __name__ == '__main__':
     
     if type_method == 0: # ORIGINAL DATA
         vdmdata = pd.read_csv('vdmdata_reduce.csv', encoding = 'utf-8-sig')
-        #vdmdata.columns = ['icd_code', 'atc_code','atc_name','nrows']
+        vdmdata.columns = ['icd_code', 'atc_code','atc_name','nrows']
         
         nodes_0 = []
         nodes_1 = []
@@ -112,7 +112,33 @@ if __name__ == '__main__':
             
         for th_atc in sorted(list(counterATC.keys())):
             p.apply_async(threshold_analysis_ws, [C, th_atc, 1, len(degX), 'original', 'bipartite'])
+            
+    elif type_method == 1: # REMOVE EDGES
+        print("Read data ...")
+        edges = pd.read_csv('edges_rx.csv', sep=',')
+        G = nx.from_pandas_edgelist(edges, 'Source', 'Target', edge_attr=True)
         
+        nodes = pd.read_csv('nodes_rx.csv', sep=',')
+        data = nodes.set_index('Id').to_dict('index').items()
+        G.add_nodes_from(data)
+        # print(G.nodes(data=True))
+        # print(G.edges(data=True))
+        
+        nodes_0 = [x for x,y in G.nodes(data=True) if y['d0']==0]
+        nodes_1 = [x for x,y in G.nodes(data=True) if y['d0']==1]
+        
+        degX,degY=bipartite.degrees(G,nodes_0)
+        degATC = dict(degX).values()
+        degCIE = dict(degY).values()
+        counterATC = collections.Counter(degATC)
+        counterCIE = collections.Counter(degCIE)
+        
+        print("Apply threshold analysis to original bipartite ... ")
+        for th_icd in sorted(list(counterCIE.keys())):
+            p.apply_async(threshold_analysis_ws, [G, th_icd, 0, len(degY), 'rxe', 'd0'])
+            
+        for th_atc in sorted(list(counterATC.keys())):
+            p.apply_async(threshold_analysis_ws, [G, th_atc, 1, len(degX), 'rxe', 'd0'])
         
     else: # SHUFFLE DATA
         
